@@ -1,0 +1,182 @@
+html, body{
+  padding: 0;
+  margin: 0;
+  background-color: #f2f2f2;
+  font-family: 'Varela Round', sans-serif;
+}
+
+#container{
+display: flex;
+}
+
+.bot_avatar{
+  height: 100px;
+  width : 100px;
+  border-radius : 50px;
+  background : url('../imgs/Logo.jpg');
+  background-position : left top;
+  background-position-x: 6px;
+  overflow : hidden;
+  float :right;
+  clear : both;
+  margin-left : 1vh;
+  background-size : cover;
+  transform: rotate(0deg);
+  transition: all .6s;
+  box-shadow: 0 5px 20px 0 #e3e3e3;
+}
+
+.bot_avatar:hover{
+  transform: rotate(305deg);
+}
+
+.chat_bubble{
+  width: 60%;
+  margin:0 auto;
+  padding-top: 10%;
+
+}
+
+.bot_msg{
+  direction: rtl;
+  text-align: center;
+  background-color: rgba(255,255,255,.8);
+  height: 100px;
+  width: 85%;
+  float: left;
+  position: relative;
+  border-radius: 4px;
+  line-height: 100px;
+  color: #52A8FF;
+  font-weight: 800;
+  font-size: 20px;
+  box-shadow: 0 5px 20px 0 #e3e3e3;
+  font-family: 'Varela Round', sans-serif;
+}
+
+.bot_msg::after{
+    content: "";
+    position: absolute;
+    left: 100%;
+    top:70%;
+    border-width: 8px;
+    border-style: solid;
+    border-color: transparent transparent transparent rgba(255,255,255,.8);
+}
+/*
+.typing_wrapper {
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 0 auto;
+  animation: typing 5s steps(80, end);
+}
+
+.typing{
+  padding: 0px 6px;
+  border-left: .1em solid orange;
+  animation: blink-caret .75s ease-in-out infinite;
+}
+
+/* The typing effect *//*
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+/* The typewriter cursor effect *//*
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: orange; }
+}*/
+
+#btns{
+  clear: both;
+  width: 92%;
+  /* margin: 0 auto; */
+  margin-top: 8%;
+  text-align: center;
+}
+.user_btn{
+  display: inline-block;
+  margin: 0% 1%;
+  background: #52A8FF;
+  padding: 2vh 5vh;
+  color: white;
+  font-weight: 100;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all .2s ease-in;
+  outline: none;
+}
+
+.user_btn{
+  border: none;
+  font-family: 'Varela Round', sans-serif;
+  padding: 2vh 3vh;
+}
+
+.user_btn:hover{
+    transform: scale(1.1);
+    background-color: #0BCDB4;
+    /*border: 2px solid #FFF;*/
+}
+
+.login, .register{
+  text-align: center;
+  width: 88%;
+  margin: 2%;
+  margin-top: 7%;
+  direction: rtl;
+  display: none;
+  transition: all 1s ease-in;
+
+}
+.input{
+
+}
+/*#email:focus, #password:focus{
+  content:"";
+}*/
+.input::placeholder, .err::placeholder{
+  color:#d8d8d8;
+}
+
+
+.input{
+
+  font-family: 'Varela Round', sans-serif;
+  color:gray;
+  text-align: center;
+  margin: 0 auto;
+  margin-bottom: 1%;
+  border: 1px solid #52A8FF;
+  line-height: 0;
+  font-size: 17px;
+  width: 58%;
+  box-sizing: border-box;
+  padding: 10px 15px;
+  border-radius: 6px;
+  /* color: red; */
+  font-weight: 100;
+  letter-spacing: 0.01em;
+  margin: 0 auto;
+  margin-right: 1%;
+  display: inline-block;
+  outline: none;
+  margin-bottom: 1%;
+}
+
+
+label { display:inline; padding:2px; }
+label > input{ /* HIDE RADIO */
+  visibility: hidden; /* Makes input not-clickable */
+/*  position: absolute; /* Remove input from document flow */
+}
+label > input + i{ /* IMAGE STYLES */
+  cursor:pointer;
+  border:2px solid transparent;
+}
+label > input:checked + i{ /* (RADIO CHECKED) IMAGE STYLES */
+  border:1px dashed #52A8FF;
+}
