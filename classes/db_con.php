@@ -13,6 +13,7 @@ class Database {
 	// Establish connection to database, when class is instantiated
 	public function __construct() {
 		$this->_link = new mysqli($this->_host, $this->_username, $this->_password, $this->_database);
+		$this->_link->set_charset("utf8");
 		if(mysqli_connect_errno()) {
 			echo "Connection Failed: " . mysqli_connect_errno();
 			exit();

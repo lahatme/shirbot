@@ -16,7 +16,7 @@ $dbname="chat_try";
 
 $conn = new mysqli($host, $user, $password, $dbname, $port, $socket)
 	or die ('Could not connect to the database server' . mysqli_connect_error());
-
+$conn->set_charset("utf8");
 //$con->close();
 
 $sql = "SELECT * FROM users WHERE _username = '$username'";

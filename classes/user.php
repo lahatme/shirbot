@@ -3,6 +3,7 @@ class User {
 	public $_id;
 	public $_name;
 	public $_gender;
+	public $_admin;
 
 
 	public function __construct() {
@@ -22,6 +23,12 @@ class User {
 	}
 	public function GetGender() {
 		return $this->_gender;
+	}
+	public function SetAdmin($admin){
+		$this->_admin = $admin;
+	}
+	public function GetAdmin() {
+		return $this->_admin;
 	}
 }
 ?>

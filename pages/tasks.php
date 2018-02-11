@@ -19,7 +19,7 @@
 
       $conn = new mysqli($host, $user, $password, $dbname, $port, $socket)
       	or die ('Could not connect to the database server' . mysqli_connect_error());
-      //$conn->set_charset("utf8");
+      $conn->set_charset("utf8");
       $topic = $_POST["topic"];
         $sql = "SELECT tsk.title, tsk.task FROM chat_try.tasks tsk Left Join chat_try.topics tpc ON tsk.topic = tpc.ID WHERE tpc.topic = '$topic'";
         $result = $conn->query($sql);

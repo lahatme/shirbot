@@ -21,7 +21,7 @@ $dbname="chat_try";
 $intent = $_POST["intent0"];
 $conn = new mysqli($host, $user, $password, $dbname, $port, $socket)
 or die ('Could not connect to the database server' . mysqli_connect_error());
-
+$conn->set_charset("utf8");
 $sql = "SELECT * FROM chat_try.bot_outputs WHERE intent = '$intent'";
 $data_array = array("");
 $result = $conn->query($sql);

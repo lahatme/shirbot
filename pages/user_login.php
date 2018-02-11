@@ -11,7 +11,7 @@ $dbname="chat_try";
 
 $conn = new mysqli($host, $user, $password, $dbname, $port, $socket)
 	or die ('Could not connect to the database server' . mysqli_connect_error());
-
+$conn->set_charset("utf8");
 //$con->close();
 
 
@@ -32,7 +32,7 @@ $password = /*"oregon";//*/$_POST["password"];
 						$user->SetGender($row["_gender"]);
       }
     session_start();
-    $_SESSION["user"] = serialize($user);
+    $_SESSION["s_user"] = serialize($user);
 
   } else {
       echo "0 results";

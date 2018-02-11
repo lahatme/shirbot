@@ -14,7 +14,7 @@
     <?php
     include '../classes/user.php';
      session_start();
-    if(!isset($_SESSION["user"]))
+    if(!isset($_SESSION["s_user"]))
     {
       header("Location: login.php"); exit();
     }
@@ -22,8 +22,9 @@
     <?php include ('../classes/db_con.php'); ?>
     var intent_collected = [];
     window.onload = setTimeout(function(){
+      elem("wrting_area").addEventListener("input", OnInput, false);
       <?php
-      $user = unserialize($_SESSION['user']);
+      $user = unserialize($_SESSION['s_user']);
       $name = $user->GetName();
       echo "append_chat('היי $name, אני שירבוט (אפשר לקרוא לי גם שיר) ואני יכולה לעזור לך להשתפר בכתיבה! ביחד נעבור כמה שלבים עד שנקבל טקסט שלם ומושלם :)','bot_comment');";
 
@@ -91,6 +92,29 @@
 
     function append_chat(text, className){
       //מוסיף דיב לתוך הצ'אט לפי קלאס וטקסט'
+
+      var parentDiv = elem("answers");
+      parentDiv.scrollTop = parentDiv.scrollHeight+50;
+      //var load = document.createElement("div");
+      //load.id = "loading";
+      //השורות הבאות מסופיות את האפקט של הבוט שמקליד, אנימציה קלילה
+      var spinner = document.createElement("div");
+      spinner.id = "loading";
+      spinner.setAttribute("class","spinner");
+      var bounce1 = document.createElement("div");
+      bounce1.setAttribute("class","spinner");
+      var bounce2 = document.createElement("div");
+      bounce2.setAttribute("class","spinner");
+      var bounce3 = document.createElement("div");
+      bounce3.setAttribute("class","spinner");
+      spinner.appendChild(bounce1);
+      spinner.appendChild(bounce2);
+      spinner.appendChild(bounce3);
+
+      document.getElementById('answers').appendChild(spinner);
+      parentDiv.scrollTop = parentDiv.scrollHeight+50;
+
+      setTimeout(function(){ document.getElementById('loading').remove();
         var answer = document.createElement("div");
         answer.innerHTML = text;
         answer.setAttribute("class", className);
@@ -108,6 +132,8 @@
         elem("user_input_text").focus();
         var current_height = elem("user_input_text").clientHeight;
         if(current_height==52) elem("user_input_text").style.height = 'auto';
+
+      }, 500);
     }
 
     function bot_proccess(text){//הפעולה מקבלת טקסט ומפענחת אותו בווט, שולחת לפעולה -bot_response
@@ -186,11 +212,32 @@
           case "wrap_topics":
             document.getElementById('wrap_tasks').style.display = 'none';
             elem("wrap_topics").style.display = "flex";
-            var topics = <?php $db = new Database();
-                                $db->Query("SELECT * FROM chat_try.topics");
-                                echo $db->Rows();
-            ?>;
-            var topics_to_ajax = "";
+            var topics = <?php /*$con=mysqli_connect("127.0.0.1","root","","chat_try");
+                                $con->set_charset("utf8");
+                                $sql = "SELECT COUNT(*) as 'counter', topics.topic FROM chat_try.TASKS tasks LEFT JOIN chat_Try.topics topics ON topics.ID = tasks.topic GROUP BY tasks.topic";
+                                $res1 = mysqli_query($con,$sql);
+                                if (FALSE === $res1) die("Select sum failed: ".mysqli_error);
+                                $data_array1 ="[";
+                                while($row1 = mysqli_fetch_row($res1))
+                                    $data_array1 = $data_array1."{'counter': '$row1[0]', 'topic': '$row1[1]'},";
+                                $data_array1 = substr($data_array1, 0, -1);
+                              echo $data_array1."]";*/
+                              $db = new Database();
+                              $db->Query("SELECT COUNT(*) as 'counter', topics.topic FROM chat_try.TASKS tasks LEFT JOIN chat_Try.topics topics ON topics.ID = tasks.topic GROUP BY tasks.topic");
+                              echo $db->Rows();
+                              ?>;
+            var parentDiv = elem("topics");
+            for(i = 0; i< topics.length; i++){
+              parentDiv.innerHTML += "<div class='topic_item' onclick='topic_click(this)'>"+topics[i].topic+"<div class='topic_counter'>"+topics[i].counter+"</div></div>";
+            }
+            elem("wrap_topics").style.opacity = "1";
+            var colors = ["#E25365", "#0F74A8", "#E2AF32","#7E5887", "#26A882", "#3FA9F5"];
+            var topics = document.getElementsByClassName("topic_item");
+            for(i = 0; i<topics.length; i++)
+            {
+              topics[i].style.background = colors[i];
+            }
+            /*var topics_to_ajax = "";
             random_hash_array = [];
             var elements = document.getElementsByClassName("topic_item");
             while(elements.length > 0)
@@ -259,7 +306,7 @@
            var anchors = document.getElementsByClassName('topic_item');
             for(var i = 0; i < anchors.length; i++) {
             var anchor = anchors[i];
-          }
+          }*/
             break;
         }
     }
@@ -267,11 +314,28 @@
     function topic_click(elm){
       //בחירת נושא!
         append_chat("בחרתי בנושא "+elm.childNodes[0].data,"user_comment");
-        var timeline = document.getElementsByClassName("progress-indicator")[0].childNodes;
-          timeline[3].setAttribute("class","completed");
-        document.getElementById('wrap_topics').style.display = 'none';
-        document.getElementById('wrap_tasks').style.display = 'flex';
-        show_task(elm, elm.childNodes[0].data);
+        $.ajax({
+            method: "POST",
+            url: "session_update.php",
+            data: {s_topic: elm.childNodes[0].data}
+            }).done(function(msg) {
+              setTimeout(function(){
+                var gender = '<?php echo $gender; ?>';
+                if(gender == "male")
+                append_chat("מגניב, עכשיו תבחר את המטלה המועדפת עליך","bot_comment");
+                else append_chat("מגניב, עכשיו תבחרי את המטלה המועדפת עליך","bot_comment");
+
+},1000);
+              console.log(JSON.parse(msg));
+              var timeline = document.getElementsByClassName("progress-indicator")[0].childNodes;
+                timeline[3].setAttribute("class","completed");
+              document.getElementById('wrap_topics').style.display = 'none';
+              setTimeout(function(){
+                elem('wrap_tasks').style.display = 'flex';
+                setTimeout(function(){elem('wrap_tasks').style.opacity = '1';}, 1000);
+              show_task(elm, elm.childNodes[0].data);}, 1800)
+        });
+
       }
 
 
@@ -287,7 +351,11 @@
             while(elements.length > 0)
                elements[0].parentNode.removeChild(elements[0]);
             for (var i = 0; i < obj.length; i++) {
+              var parentDiv = elem("tasks");
               var task_i_title = obj[i].title;
+              var task_i_task = obj[i].task;
+              parentDiv.innerHTML +=  "<div class='task_item' onclick='task_click(this)'> <div class='task_title_td'>"+task_i_title+"</div><div class='task_task_td'>"+task_i_task+"</div></div>";
+              /*var task_i_title = obj[i].title;
               var task_i_task = obj[i].task;
               var task = document.createElement("TABLE");
               var table_row = document.createElement("TR");
@@ -304,9 +372,10 @@
               table_row.appendChild(task_task_td);
 
               task.appendChild(table_row);
-              task.setAttribute("class","task_item");
-              var parentDiv = elem("tasks");
-              parentDiv.appendChild(task);
+              task.setAttribute("class","task_item");*/
+
+              //var parentDiv = elem("tasks");
+              //parentDiv.appendChild(task);
               //task.style.background= elm.style.background;
               /*
               task.innerText = task_i;
@@ -318,7 +387,7 @@
               task.style.background= elm.style.background;
               task.addEventListener("mouseenter",function(){task_hover(this,"in")},false);
               task.addEventListener("mouseleave",function(){task_hover(this,"out")},false);*/
-              task.addEventListener("click",function(){task_click(this)});
+              //task.addEventListener("click",function(){task_click(this)});
               }
 
         });
@@ -350,7 +419,17 @@
      function show_aspect(){
       document.getElementsByClassName("large_shir")[0].style.display = "block";
       elem("arguing_proccess_btns").style.display = "block";
+
       var gender = '<?php echo $gender; ?>';
+      //append_chat("<B>עכשיו הגיע הזמן לחשוב על טיעונים בעד ונגד!</B> בוא נראה על כמה טיעונים אתה יכול לחשוב <i class='em em-thinking_face'></i>","bot_comment");
+      setTimeout(function(){
+        var gender = '<?php echo $gender; ?>';
+        if(gender=="male")
+        append_chat("מצוין, נושא מעניין! <br> אז האם אתה תומך או מתנגד לשילוב שחקנים זרים בנבחרת ישראל? <br> הסתכל שמאלה, ותתחיל להעלות טיעונים.","bot_comment")
+        else {
+          append_chat("מצוין, נושא מעניין! <br> אז האם את תומכת או מתנגדת לשילוב שחקנים זרים בנבחרת ישראל? <br> הסתכלי שמאלה, ותתחילי להעלות טיעונים.","bot_comment");
+        }
+},500)
       var large_bot_msg_txt = "<B>עכשיו הגיע הזמן לחשוב על טיעונים בעד ונגד!</B> בוא נראה על כמה טיעונים אתה יכול לחשוב <i class='em em-thinking_face'></i>";
       if(gender == "male") document.getElementsByClassName("large_bot_msg_txt")[0].innerHTML = large_bot_msg_txt;
       else{
@@ -418,11 +497,34 @@
         function task_click(elm){
           document.getElementById('wrap_tasks').style.display = 'none';
           //document.getElementById('wrap_aspect').style.display = 'flex';
-          show_aspect();
+          var task = elm.children[0].innerText;
+
+          $.ajax({
+              method: "POST",
+              url: "session_update.php",
+              data: {s_task: task}
+              }).done(function(msg) {
+
+                console.log(JSON.parse(msg));
+                append_chat("בסדר, בחרתי במטלה - "+elm.children[0].innerText,"user_comment");
+                show_aspect();
+
+          });
+
+
+
+
 
         }
 
         function i_finish(){
+          if(document.getElementsByClassName("positive_item").length <3 && document.getElementsByClassName("negative_item").length< 3){
+            append_chat("לא נוכל להמשיך לשלב הבא בלי 3 טיעונים בעד או 3 טיעונים נגד","bot_comment");
+
+          }
+          else {
+
+
           var timeline = document.getElementsByClassName("progress-indicator")[0].childNodes;
           timeline[5].setAttribute("class","completed");
           timeline[7].setAttribute("class","active")
@@ -431,6 +533,7 @@
 
           document.getElementById('wrap_table').style.display = 'flex';
           elem("wrap_table").style.opacity = "1";
+        }
           //elem("wrap_aspect").style.opacity = "0";
         }
 
@@ -442,6 +545,9 @@
 
 
         function self_argue(){
+          var timeline = document.getElementsByClassName("progress-indicator")[0].childNodes;
+          timeline[3].setAttribute("class","completed");
+          timeline[5].setAttribute("class","active");
           elem("arguing_proccess_btns").style.display = "none";
           var box = document.getElementsByClassName('tiun_insert_box')[0];
           box.classList.remove("against_back");
@@ -453,8 +559,8 @@
             container.removeChild(document.getElementsByClassName('triger_btns')[0]);
           }
           if(document.getElementsByClassName('aspect_card').length > 0)
-          elem("wrap_large_tiunim").innerHTML += "<div class='triger_btns'> <button id='add_shir_tiun' onclick='self_argue()'> יש לי טיעון! </button> <button id='next_card' onclick='shir_argue()'> היבט אחר </button> <button id='finish_tiunim' onclick='i_finish()'> סיימתי להעלות טיעונים </button> </div>";
-          else elem("wrap_large_tiunim").innerHTML += "<div class='triger_btns'> <button id='finish_tiunim' onclick='i_finish()'> סיימתי להעלות טיעונים </button> <button id='next_card' onclick='shir_argue()'> שיר תעזרי לי <i class='em em-bulb'></i></button> </div>";
+          elem("wrap_large_tiunim").innerHTML += "<div class='triger_btns'> <button id='add_shir_tiun' onclick='self_argue()' class='btns'> יש לי טיעון! </button> <button id='next_card' onclick='shir_argue()' class='btns'> היבט אחר </button> <button id='finish_tiunim' onclick='i_finish()' class='btns'> סיימתי להעלות טיעונים </button> </div>";
+          else elem("wrap_large_tiunim").innerHTML += "<div class='triger_btns'> <button id='finish_tiunim' onclick='i_finish()' class='btns'> סיימתי להעלות טיעונים </button> <button id='next_card' onclick='shir_argue()' class='btns'> שיר תעזרי לי </button> </div>";
         }
 
         function add_self_tiun(el){//הוספת טיעון באופן עצמאי
@@ -466,7 +572,7 @@
           tiun_input.setAttribute("class","tiun_input_text");
           tiun_input.setAttribute("rows","1");*/
           document.getElementsByClassName('tiun_insert_box')[0].innerHTML = document.getElementsByClassName('tiun_insert_box')[0].innerHTML.replace("רוצה להוסיף טיעון","") + " כי: ";
-          document.getElementsByClassName("tiun_insert_box")[0].innerHTML += "<table id='tiun_input_table'><tr style='width:100%'><td style='width:85%'><textarea id='tiun_input_text' class='tiun_input_text' placeholder='לכובע שלי שלוש פינות...' spellcheck='true' rows='1' cols='1'></textarea></td><td style='text-align: center;vertical-align: middle;width: 8%;'><button id='tiun_btn' onclick='tiun_collection(this)'>טען</button></td></tr></table>"
+          document.getElementsByClassName("tiun_insert_box")[0].innerHTML += "<table id='tiun_input_table'><tr style='width:100%'><td style='width:85%'><textarea id='tiun_input_text' class='tiun_input_text' placeholder='<?php if($gender == 'male') echo 'כתוב את הטיעון שלך כאן...'; else echo 'כתבי את הטיעון שלך כאן...';?>' spellcheck='true' rows='1' cols='1'></textarea></td><td style='text-align: center;vertical-align: middle;width: 8%;'><button id='tiun_btn' onclick='tiun_collection(this)'>טען</button></td></tr></table>"
           document.getElementById('tiun_input_text').addEventListener("input", OnInput, false);
           if(el.id =="for"){document.getElementsByClassName('tiun_insert_box')[0].classList.remove("against_back"); document.getElementsByClassName('tiun_insert_box')[0].classList.add("for_back"); document.getElementsByClassName("tiun_input_text")[0].style.borderColor = "#0BCDB4"; elem("tiun_btn").classList.add("for_back");}
           else {elem("tiun_btn").classList.add("against_back"); document.getElementById("tiun_input_table").style.borderColor = "#E25365"; document.getElementsByClassName('tiun_insert_box')[0].classList.remove("for_back"); document.getElementsByClassName('tiun_insert_box')[0].classList.add("against_back");}
@@ -476,6 +582,9 @@
         var used_aspects = [];
 
         function shir_argue(){//העלאת טיעונים ביחד עם שיר - כרטיסיות ומילים
+          var timeline = document.getElementsByClassName("progress-indicator")[0].childNodes;
+          timeline[3].setAttribute("class","completed");
+          timeline[5].setAttribute("class","active");
           document.getElementsByClassName('tiun_insert_box')[0].style.display = "none";
           elem("arguing_proccess_btns").style.display = "none";
           document.getElementsByClassName('large_bot_msg_txt')[0].innerHTML = "<?php echo $name. " עלו לי כמה רעיונות לטיעון שלך <i class='em em-wink'></i> נסי לחשוב על: " ?>";
@@ -534,7 +643,7 @@
                   var words_list = words_final_json[random_card_id].words;
                   for(i = 0; i< 10 ; i++)
                       document.getElementsByClassName('aspect_card_words_wrap')[0].innerHTML += "<div class='aspect_word'>"+words_list[i]+"</div>";
-                  container.innerHTML += "<div class='triger_btns'> <button id='add_shir_tiun' onclick='self_argue()'> יש לי טיעון! </button> <button id='next_card' onclick='shir_argue()'> היבט אחר </button> <button id='finish_tiunim' onclick='i_finish()'> סיימתי להעלות טיעונים </button> </div>";
+                  container.innerHTML += "<div class='triger_btns'> <button id='add_shir_tiun' onclick='self_argue()' class='btns'> יש לי טיעון! </button> <button id='next_card' class='btns' onclick='shir_argue()'> היבט אחר </button> <button class='btns' id='finish_tiunim' onclick='i_finish()'> סיימתי להעלות טיעונים </button> </div>";
               }
 
               else{//כשניגמרו הכרטיסיות
@@ -545,8 +654,15 @@
 
         function tiun_collection(b){
               var user_opinion = "";
-              if(b.className == "for_back") user_opinion = "positive";
-              else user_opinion = "negative";
+              if(b.className == "for_back"){
+                user_opinion = "positive";
+                append_chat("הוספתי טיעון בעד "+"<i class='em em---1'></i>","user_comment");
+
+            }
+              else {user_opinion = "negative";
+                append_chat("הוספתי טיעון נגד "+"<i class='em em--1'></i>","user_comment");
+            }
+            var tiunim_quantity = document.getElementsByClassName("positive_item").length + document.getElementsByClassName("negative_item").length;
               var opinion_text = elem("tiun_input_text").value;
 
 
@@ -559,7 +675,22 @@
               //document.getElementsByClassName("argument_input")[0].value="";
               arg.addEventListener("dragstart",function(){drag(event)});
               arg.setAttribute('draggable', true);
+
+              setTimeout(function(){
+              var tiunim_quantity = document.getElementsByClassName("positive_item").length + document.getElementsByClassName("negative_item").length;
+              switch (tiunim_quantity) {
+                case 1:
+                  append_chat("כל הכבוד על הטיעון הראשון שלך!" + "<i class='em em-muscle'></i>","bot_comment");
+                  break;
+                case 2:
+                  append_chat("יופי, נמשיך לפתח עוד טיעונים","bot_comment");
+                  break;
+
+                default:
+                append_chat("עבודה טובה","bot_comment");
+              }
               self_argue();
+            }, 700);
         }
 
         function Select_opinion(no_opt,opt,arrange,num){
@@ -592,28 +723,35 @@
          Arrangement[i]={_text:data};
      }
 
-     var direct=[];
-     var opt1;
-     var number_of_instruction =0;
-     function show_writing(opt){
-         opt1=opt;
-         document.getElementById('wrap_table').style.display = 'none';
-         document.getElementById('wrap_writing').style.display = 'block';
-         elem("wrap_writing").style.opacity = "1";
-         elem("wrap_table").style.opacity = "0";
-         direct = <?php $db = new Database();
-                             $db->Query("SELECT * FROM chat_try.direct");
-                             echo $db->Rows();
-         ?>;
-         append_chat(direct[0].text,"bot_comment");
-         number_of_instruction = document.getElementsByClassName(opt).length  ;
-         var text1= "פסקת פתיחה";
-       //  var text1 = document.getElementById(Arrangement[n]._text).childNodes[1].innerText;
-         elem('wrting_area').innerText= text1;
-       }
+    var direct="";
+    var opt1;
+    var number_of_instruction =0;
+    function show_writing(opt){
+        opt1=opt;
+        var timeline = document.getElementsByClassName("progress-indicator")[0].childNodes;
+        timeline[7].setAttribute("class","completed");
+        timeline[9].setAttribute("class","active");
+        document.getElementById('wrap_table').style.display = 'none';
+        document.getElementById('wrap_writing').style.display = 'block';
+        elem("wrap_writing").style.opacity = "1";
+        elem("wrap_table").style.opacity = "0";
+        direct = <?php $db = new Database();
+                            $db->Query("SELECT * FROM chat_try.direct");
+                            echo $db->Rows();
+        ?>;
+        //direct = JSON.parse(direct);
+        append_chat(direct[0].text,"bot_comment");
+        number_of_instruction = document.getElementsByClassName(opt1).length  ;
+        console.log(number_of_instruction);
+        var text1= "פסקת פתיחה";
+      //  var text1 = document.getElementById(Arrangement[n]._text).childNodes[1].innerText;
+        //elem('wrting_area').value = "";
+        elem('wrting_area').value = text1;
+  }
 
 
        function check_text(){
+            append_chat("סיימתי לכתוב את הפסקה, תבדקי אותה בבקשה","user_comment")
             elem("wrap_after_text").innerHTML = "";
             var text_elemnt = document.getElementById("wrting_area");
             var text = "";
@@ -724,7 +862,7 @@
 
               //var parent = document.getElementById("wrap_after_text");
               //parent.insertBefore(div_to_add_after_check,document.getElementById("feedback_area"));
-              parent.innerHTML += "<button id='to_next_p' onclick='next_p()'> סיימתי לתקן </button>"
+              parent.innerHTML += "<button id='to_next_p' class='btns' onclick='next_p()'> סיימתי לתקן </button>"
 
 
 
@@ -739,38 +877,50 @@
              }
 
              var k =1;
-             function next_p(){
+           function next_p(){
 
-             //var wrting_area = document.createElement("div");
-             //wrting_area.setAttribute("class","wrting_area");
-             append_chat(direct[k].text,"bot_comment");
-             k++;
-             var text_elemnt = document.getElementById("feedback_area");
-             var text = "";
-             if(text_elemnt.tagName == "TEXTAREA") text = document.getElementById("feedback_area").value;
-             else text = document.getElementById("feedback_area").innerText;
-             var argi = document.createElement("div");
-             argi.setAttribute("class","texts");
-             argi.innerHTML= text;
-             number_of_instruction--;
-             //console.log(n);
-             if (number_of_instruction>= 0){
-             var text1 = document.getElementById(Arrangement[number_of_instruction]._text).childNodes[0].innerText;
-             console.log(text1);
-             elem('wrting_area').value= text1;
+           //var wrting_area = document.createElement("div");
+           //wrting_area.setAttribute("class","wrting_area");
+           append_chat("סיימתי לתקן את הפסקה","user_comment");
+           var timeline = document.getElementsByClassName("progress-indicator")[0].childNodes;
+           timeline[9].setAttribute("class","completed");
+           timeline[11].setAttribute("class","active");
 
-             elem('wrting_area').innerText= text1;
-
-             //elem('writing_comp').innerText= text;
+           append_chat(direct[k].text,"bot_comment");
+           k++;
+           var text_elemnt = document.getElementById("feedback_area");
+           var text = "";
+           if(text_elemnt.tagName == "TEXTAREA") text = document.getElementById("feedback_area").value;
+           else text = document.getElementById("feedback_area").innerText;
+           var argi = document.createElement("div");
+           argi.setAttribute("class","texts");
+           argi.innerHTML= text;
+           number_of_instruction--;
+           console.log(number_of_instruction);
+           console.log(Arrangement);
+           len= Arrangement.length;
+           if (number_of_instruction>= 0){
+           var text1 = document.getElementById(Arrangement[len-number_of_instruction-1]._text).childNodes[0].innerText;
            }
-             var parentDiv = elem("writing_comp");
-             parentDiv.appendChild(argi);
-             elem('wrting_area').style.display="block";
-             document.getElementById("wrap_before_text").style.display= "block";
-             document.getElementById("wrap_before_text").style.opacity = "1";
-             document.getElementById("wrap_after_text").style.opacity = "0";
+           else {
+             var text1= " ";
+           }
+           console.log(text1);
+           //elem('wrting_area').value= "";
 
-             }
+           elem('wrting_area').value= text1;
+
+           //elem('writing_comp').innerText= text;
+
+           var parentDiv = elem("writing_comp");
+           parentDiv.appendChild(argi);
+           elem('wrting_area').style.display="block";
+           document.getElementById("wrap_before_text").style.display= "block";
+           document.getElementById("wrap_before_text").style.opacity = "1";
+           document.getElementById("wrap_after_text").style.opacity = "0";
+
+           }
+
 
 
           function get_rid_off_punctuations(text){
@@ -987,8 +1137,8 @@
              </div>
              <div id="wrap_large_tiunim">
                <div id="arguing_proccess_btns">
-                 <button id="alone" onclick="self_argue()">יש לי טיעונים משלי</button>
-                 <button id="together" onclick="shir_argue()">בואי נחשוב ביחד</button>
+                 <button id="alone" onclick="self_argue()" class="btns">יש לי טיעונים משלי</button>
+                 <button id="together" onclick="shir_argue()" class="btns">בואי נחשוב ביחד</button>
                </div>
 
 
@@ -1043,9 +1193,9 @@
 
                                                              </div>
                                                              <div id="wrap_before_text">
-                                                             <textarea rows="10" cols="100" id="wrting_area">
+                                                             <textarea rows="1" id="wrting_area" onkeypress="OnInput()">
                                                              </textarea>
-                                                             <input type="button" name="" value="תבדקי אותי" id="to_check" onclick="check_text()"  tabindex="0">
+                                                             <input type="button" name="" class="btns" value="תבדקי אותי" id="to_check" onclick="check_text()"  tabindex="0">
                                                              </div>
                                                              <div id="wrap_after_text">
 

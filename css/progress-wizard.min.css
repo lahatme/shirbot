@@ -20,7 +20,7 @@
   flex:1
 }
 .progress-indicator{
-  margin:29px 0px 1%;padding:0;font-size:100%;
+  margin:0;padding:0;font-size:100%;
   text-transform:uppercase}
 .progress-indicator>li{
   list-style:none;
@@ -44,7 +44,7 @@
   height:20px;
   background-color:#fff;
   display:block;
-  margin:0 auto .5em;
+  margin:0 auto;
   border-bottom:1px solid #888
 }
 .progress-indicator>li .bubble:after,.progress-indicator>li .bubble:before{
